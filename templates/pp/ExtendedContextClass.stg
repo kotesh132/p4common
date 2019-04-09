@@ -1,0 +1,40 @@
+ExtendedContextClassSkel(className,ruleName,packageName,imports,interfaceNames)::=<<
+
+package <packageName>;
+
+<imports:{import |
+<\n>import <import>;}>
+
+public class <className>ContextExt extends AbstractBaseExt <if(interfaceNames)> implements <interfaceNames> <endif>{
+
+	@Getter private <className>Context ctx;
+	
+	public <className>ContextExt(<className>Context ctx) {
+		this.ctx = ctx;
+		
+	}
+	
+	@Override
+	public  <className>Context getContext(){
+		return (<className>Context)contexts.get(contexts.size()-1);
+	}
+	
+	@Override
+	public <className>Context getContext(String str){
+		return (<className>Context)new PopulateExtendedContextVisitor().visit(getParser(str).<ruleName>());
+	}
+	
+	@Override
+	public void setContext(ParserRuleContext ctx){
+		if(ctx != null){
+			if(ctx instanceof <className>Context){
+				addToContexts((<className>Context) ctx);
+			} else {
+				throw new ClassCastException(ctx.getClass().getSimpleName() + " cannot be casted to "+ <className>Context.class.getName());
+			}
+		} else {
+			addToContexts(null);
+		}
+	}
+}
+>>

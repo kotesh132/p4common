@@ -1,0 +1,38 @@
+ExtendedContextPopulatingVisitorSkel(grammarName,packageName,imports,parseRuleNames)::=<<
+
+package <packageName>;
+
+<imports:{import |
+<\n>import <import>;}>
+
+
+public class ExtendedContextGetVisitor extends <grammarName>ParserBaseVisitor\<AbstractBaseExt>{
+
+	<parseRuleNames:{parseRuleName | 
+	@Override 
+	public AbstractBaseExt visit<parseRuleName>(<grammarName>Parser.<parseRuleName>Context ctx) {
+		return ctx.extendedContext.getContext().extendedContext;
+	\}
+	}>;
+}
+>>
+
+ContextPopulatingVisitorSkel(grammarName,packageName,imports,parseRuleNames)::=<<
+
+package <packageName>;
+
+<imports:{import |
+<\n>import <import>;}>
+
+
+public class ExtendedContextGetVisitor extends <grammarName>ParserBaseVisitor\<AbstractBaseExt>{
+
+	<parseRuleNames:{parseRuleName | 
+	@Override 
+	public AbstractBaseExt visit<parseRuleName>(<grammarName>Parser.<parseRuleName>Context ctx) {
+		return ctx.extendedContext.getContext();
+	\}
+	}>;
+}
+>>
+	

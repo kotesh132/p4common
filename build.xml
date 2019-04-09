@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="p4common" default="build" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<import file="./base_build.xml"/>
+  	<property name="toolname" value="p4common" />
+ 
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="../p4common/ant/contrib/ant-contrib-1.0b3.jar" />
+		</classpath>
+	</taskdef>
+	
+ 	<target name="load-props" description="loading properties from p4common.properties files">
+  		<echo message="load props from common build"/>
+        <loadproperties srcfile="../${toolname}/cfg/p4common.properties" />
+  		<echo message="project name is  ${common.project.name}" />
+  		<echo message="done loading props"/>
+	</target>
+	
+	<target name="init-tool" depends="load-props">
+    	<mkdir dir="${class.dir}" />
+    	<mkdir dir="${dist.dir}" />
+  	</target>
+ 
+	<target name="compile" depends="antlr-gen,resolve-common-lib-classpath" description="compiles src, tools, target,utils directory and places class files in classes directory">
+    	<echo message="compiling common" />
+  		<javac includeantruntime="false" srcdir="${src.dir}:${tools.dir}:${utils.dir}:${target.dir}" destdir="${class.dir}" debug="true" debuglevel="lines,vars,source" fork="true">
+      		<classpath refid="common.libs.classpath" />
+      		<classpath>
+        		<pathelement location="${cfg.dir}" />
+      		</classpath>
+      		<compilerarg value="-Xlint" />
+    	</javac>
+
+    	<!-- copy other resources -->
+    	<copy todir="${class.dir}">
+      		<fileset dir="${target.dir}">
+        		<include name="**/*.tokens" />
+      		</fileset>
+      		<fileset dir="${cfg.dir}">
+        		<include name="**/*" />
+      		</fileset>
+    	</copy>
+	</target>
+
+  	<target name="build" depends="jar" />
+
+  	<target name="jar" depends="clean,init-version,compile">
+    	<fileset id="parsers.libs.fileset" dir="${lib.dir}">
+      		<patternset includes="**/*.jar"/>
+    	</fileset>
+    	<jar jarfile="${dist.dir}/${jar.name}" basedir="${class.dir}" duplicate="fail" filesetmanifest="merge">
+
+      		<manifest>
+        		<attribute name="VERSION" value="${full.version}" />
+        		<attribute name="SVN-Revision" value="${svnversion}" />
+        		<attribute name="Main-Class" value="${mainclass}" />
+      		</manifest>
+    	</jar>
+  		<write-binary cmdline="java -ea -Xmx4g -cp ${dist.dir}/${jar.name} ${mainclass}" />
+  	</target>
+
+	<target name="antlr-gen" depends="resolve-common-full-classpath" description="Generates the lexer and parser from the .g grammar file.">
+        <echo>Generating the parser files  for ANTLR and Preprocessor grammars...</echo>
+        <java jar="${lib.antlr}" fork="true" dir="${grammar.dir}">
+            <arg line="${antlrLexerGrammarFile} -listener -visitor -encoding UTF-8 -package ${antlrGrammarFilesPackage} -o ../${antlrTargetDir}" />
+            <classpath refid="common.full.classpath" />
+        </java>
+
+        <java jar="${lib.antlr}" fork="true" dir="${grammar.dir}">
+            <arg line="${antlrParserGrammarFile} -listener -visitor -encoding UTF-8 -package ${antlrGrammarFilesPackage} -o ../${antlrTargetDir}" />
+            <classpath refid="common.full.classpath" />
+        </java>
+
+        <java jar="${lib.antlr}" fork="true" dir="${grammar.dir}">
+            <arg line="${ppLexerGrammarFile} -listener -visitor -encoding UTF-8 -package ${ppGrammarFilesPackage} -o ../${ppTargetDir}" />
+            <classpath refid="common.full.classpath" />
+        </java>
+
+        <java jar="${lib.antlr}" fork="true" dir="${grammar.dir}">
+            <arg line="${ppParserGrammarFile} -listener -visitor -encoding UTF-8 -package ${ppGrammarFilesPackage} -o ../${ppTargetDir}" />
+            <classpath refid="common.full.classpath" />
+        </java>
+    </target>
+	
+ 	<target name="clean" depends="load-props">
+  		<delete file="${runner.name}" />
+  		<delete file="${runner.name}.bat" />
+  		<delete dir="${dist.dir}" includeEmptyDirs="true" />
+  		<delete dir="${class.dir}" includeEmptyDirs="true" />
+	</target>
+</project>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="base" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+ 
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+  			<pathelement location="../p4common/ant/contrib/ant-contrib-1.0b3.jar" />
+		</classpath>
+	</taskdef>
+	
+	<condition property="os.type.mac" value="true" else="false">
+	    <os family="mac"/>
+	</condition>
+	<condition property="os.type.linux" value="true" else="false">
+		<and>
+      <os family="unix"/>
+			<not>
+				<os family="mac"/>
+			</not>
+		</and>
+	</condition>
+	<condition property="os.type.windows" value="true" else="false">
+	   <os family="windows" />
+	</condition>
+	
+	<target name="load-props">
+		<fail message="Override load props target."/>
+	</target>
+
+	<target name="init-tool">
+		<fail message="Override init-tool target."/>
+	</target>
+	
+	<target name="init-props">
+		<property name="top.dir" value=".."/>
+		<property name="tooldir" value="${top.dir}/${toolname}"/>
+		<property name="installer.staging" value="${tooldir}/memoir"/>
+		<property name="doc.src.dir" value="${tooldir}/doc"/>
+	</target>
+		
+	<target name="init" depends="init-props, init-tool"/>
+	
+   	<target name="init-version" depends="init">
+		<trycatch>
+	        <try>
+	            <exec dir="../.." executable="perl" outputproperty="svnversion">
+                    <arg value="${svnversion.exec}"/>
+                </exec>
+	        </try>
+	        <catch>
+	            <property name="svnversion" value="UNKNOWN"/>
+	        </catch>
+    	</trycatch>
+	    <loadfile property="major.version" srcfile="${common.dir}/${version.dir}/${major.version.file}"/>
+	    <loadfile property="minor.version" srcfile="${common.dir}/${version.dir}/${minor.version.file}"/>
+		<echo file="${common.dir}/${version.dir}/${build.version.file}" message="${svnversion}"/>
+	    <property name="full.version" value="${major.version}.${minor.version}.${svnversion}"/>
+   		<property name="jar.name" value="${toolname}-${full.version}.jar"/>
+   		<property name="fatjar.name" value="${toolname}-${full.version}-fat.jar"/>
+	    <echo message="Invoking ANT for ${toolname}:${full.version}"></echo>
+	</target>
+	
+	<target name="resolve-common-lib-classpath" depends="init">
+		<fileset id="common.libs.fileset" dir="${common.lib.dir}">
+            <patternset includes="**/*.jar" />
+        </fileset>
+		<path id="common.libs.classpath">
+			<fileset refid="common.libs.fileset" />
+		</path>
+		<property name="common.libs.classpath" refid="common.libs.classpath" />
+	</target>
+	
+	<target name="resolve-common-full-classpath" depends="resolve-common-lib-classpath">
+        <fileset id="common.dist.fileset" dir="${tooldir}/${dist.dir}">
+	        <patternset includes="**/*.jar" />
+	    </fileset>
+	    <path id="common.full.classpath">
+            <pathelement location="${tooldir}/${class.dir}" />
+	        <fileset refid="common.libs.fileset" />
+	    	<fileset refid="common.dist.fileset" />
+	    </path>
+		<property name="common.full.classpath" refid="common.full.classpath" />
+	</target>
+	
+	<macrodef name="write-binary">
+    	<attribute name="cmdline" />
+		<attribute name="runnername" default="${runner.name}"/>
+		<sequential>
+			<echo file="@{runnername}" append="false" message="@{cmdline} &quot;$@&quot;"/>
+			<chmod file="@{runnername}" perm="+x"/>
+			<echo file="@{runnername}.bat" append="false" message="@{cmdline} %*"/>
+		</sequential>
+  	</macrodef>
+</project>
